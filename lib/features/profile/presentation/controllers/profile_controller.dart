@@ -1,0 +1,14 @@
+import 'package:get/get.dart';
+import '../../../../../app/theme/app_theme.dart';
+
+class ProfileController extends GetxController {
+  final RxBool notificationsEnabled = true.obs;
+
+  void toggleNotifications(bool val) => notificationsEnabled.value = val;
+
+  void toggleTheme() {
+    Get.find<ThemeController>().toggleTheme();
+  }
+
+  void logout() => Get.offAllNamed('/splash');
+}
