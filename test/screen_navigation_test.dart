@@ -9,6 +9,7 @@ void main() {
   testWidgets('requested destinations can be opened through named routes', (
     tester,
   ) async {
+    Get.testMode = true;
     await tester.pumpWidget(const TodoApp());
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();

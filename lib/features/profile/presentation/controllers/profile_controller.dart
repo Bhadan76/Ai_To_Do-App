@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
-import '../../../../../app/theme/app_theme.dart';
+
+import '../../../../app/theme/app_theme.dart';
+import '../../../authentication/presentation/controllers/auth_controller.dart';
 
 class ProfileController extends GetxController {
   final RxBool notificationsEnabled = true.obs;
@@ -10,5 +12,7 @@ class ProfileController extends GetxController {
     Get.find<ThemeController>().toggleTheme();
   }
 
-  void logout() => Get.offAllNamed('/splash');
+  void logout() {
+    Get.find<AuthController>().logout();
+  }
 }

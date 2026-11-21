@@ -21,6 +21,7 @@ void main() {
           RouteNames.calendar,
           RouteNames.profile,
           RouteNames.statistics,
+          RouteNames.categories,
           RouteNames.aiAssistant,
           RouteNames.aiTaskGeneration,
         }),

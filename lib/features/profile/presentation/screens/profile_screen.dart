@@ -6,8 +6,9 @@ import '../../../../../app/theme/app_theme.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../../../shared/widgets/profile_menu_item.dart';
+import '../controllers/profile_controller.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends GetView<ProfileController> {
   const ProfileScreen({super.key});
 
   @override
@@ -61,7 +62,7 @@ class ProfileScreen extends StatelessWidget {
               color: AppColors.errorRed,
             ),
             title: const Text('Logout'),
-            onTap: () => Get.offAllNamed(RouteNames.login),
+            onTap: () => controller.logout(),
           ),
         ],
       ),
@@ -123,7 +124,7 @@ class ProfileScreen extends StatelessWidget {
 class ProfileMetric extends StatelessWidget {
   final String value;
   final String label;
-  const ProfileMetric({required this.value, required this.label});
+  const ProfileMetric({super.key, required this.value, required this.label});
   @override
   Widget build(BuildContext context) => Column(
     children: [

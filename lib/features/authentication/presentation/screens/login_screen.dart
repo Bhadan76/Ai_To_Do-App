@@ -4,33 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../app/routes/route_names.dart';
+import '../controllers/auth_controller.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends GetView<AuthController> {
   const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _login() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() => _isLoading = false);
-    Get.offAllNamed(RouteNames.home);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 _buildLabel('Email Address'),
                 const SizedBox(height: 8),
                 _buildTextField(
-                  controller: _emailController,
+                  controller: controller.emailController,
                   hint: 'Email Address',
                   prefixIcon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
@@ -115,31 +92,46 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password field
                 _buildLabel('Password'),
                 const SizedBox(height: 8),
-                _buildTextField(
-                  controller: _passwordController,
-                  hint: 'Password',
-                  prefixIcon: Icons.lock_outline_rounded,
-                  obscureText: _obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: AppColors.secondaryText,
-                      size: 20,
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                ),
+                Obx(() => _buildTextField(
+                      controller: controller.passwordController,
+                      hint: 'Password',
+                      prefixIcon: Icons.lock_outline_rounded,
+                      obscureText: !controller.isPasswordVisible.value,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          controller.isPasswordVisible.value
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: AppColors.secondaryText,
+                          size: 20,
+                        ),
+                        onPressed: controller.togglePasswordVisibility,
+                      ),
+                    )),
 
                 const SizedBox(height: 10),
+
+                // Error message
+                Obx(() => controller.errorMessage.value.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Text(
+                          controller.errorMessage.value,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: AppColors.errorRed,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink()),
 
                 // Forgot password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Get.snackbar('Message', 'Up coming');
+                    },
                     child: Text(
                       'Forgot Password?',
                       style: GoogleFonts.inter(
@@ -155,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Login button
                 GestureDetector(
-                  onTap: _isLoading ? null : _login,
+                  onTap: controller.isLoading.value ? null : controller.login,
                   child: Container(
                     width: double.infinity,
                     height: AppSizes.buttonHeight,
@@ -175,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     child: Center(
-                      child: _isLoading
+                      child: Obx(() => controller.isLoading.value
                           ? const SizedBox(
                               width: 24,
                               height: 24,
@@ -191,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.white,
                               ),
-                            ),
+                            )),
                     ),
                   ),
                 ),
@@ -226,7 +218,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: Icons.g_mobiledata_rounded,
                         label: 'Google',
                         iconColor: AppColors.errorRed,
-                        onTap: () => Get.offAllNamed(RouteNames.home),
+                        onTap: () {
+                          Get.snackbar('Message', 'Coming Soon');
+                        },
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -235,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         icon: Icons.facebook_rounded,
                         label: 'Facebook',
                         iconColor: AppColors.primary,
-                        onTap: () => Get.offAllNamed(RouteNames.home),
+                        onTap: () => Get.snackbar('Message', 'Coming Soon'),
                       ),
                     ),
                   ],
@@ -313,6 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: TextFormField(
         controller: controller,
         obscureText: obscureText,
+        textInputAction: TextInputAction.next,
         keyboardType: keyboardType,
         style: GoogleFonts.inter(fontSize: 15, color: AppColors.darkNavy),
         decoration: InputDecoration(

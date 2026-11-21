@@ -11,6 +11,8 @@ class RouteNames {
   static const String calendar = '/calendar';
   static const String profile = '/profile';
   static const String statistics = '/statistics';
+  static const String categories = '/categories';
+  static const String allTasks = '/all-tasks';
   static const String aiAssistant = '/ai-assistant';
   static const String aiTaskGeneration = '/ai-task-generation';
 }

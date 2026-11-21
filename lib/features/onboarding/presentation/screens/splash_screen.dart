@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../app/routes/route_names.dart';
+import '../../../authentication/presentation/controllers/auth_controller.dart';
 import '../widgets/app_name.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -37,9 +38,22 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
 
-    _timer = Timer(const Duration(seconds: 2), () {
+    _timer = Timer(const Duration(seconds: 2), () async {
       if (mounted) {
-        Get.offAllNamed(RouteNames.onboarding);
+        // Attempt to restore a previous session
+        bool hasSession = false;
+        try {
+          final authController = Get.find<AuthController>();
+          hasSession = await authController.restoreSession();
+        } catch (_) {
+          // AuthController not registered or restore failed
+        }
+
+        if (hasSession && mounted) {
+          Get.offAllNamed(RouteNames.home);
+        } else if (mounted) {
+          Get.offAllNamed(RouteNames.onboarding);
+        }
       }
     });
   }

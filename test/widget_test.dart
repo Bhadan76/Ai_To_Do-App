@@ -8,6 +8,7 @@ void main() {
   tearDown(Get.reset);
 
   testWidgets('app opens the TodoApp splash with its tagline', (tester) async {
+    Get.testMode = true;
     await tester.pumpWidget(const TodoApp());
     await tester.pump(const Duration(milliseconds: 500));
 
@@ -18,6 +19,7 @@ void main() {
   testWidgets('theme controller switches the application to dark mode', (
     tester,
   ) async {
+    Get.testMode = true;
     await tester.pumpWidget(const TodoApp());
     final controller = Get.find<ThemeController>();
 
