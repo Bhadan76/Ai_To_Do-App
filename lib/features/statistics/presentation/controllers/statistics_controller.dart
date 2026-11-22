@@ -1,8 +1,11 @@
 import 'package:get/get.dart';
-import '../../../../../shared/models/task_model.dart';
+
+import '../../../tasks/domain/models/task.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 
 class StatisticsController extends GetxController {
-  List<TaskModel> get allTasks => MockTasks.tasks;
+  List<TaskEntity> get allTasks => Get.find<HomeController>().tasks;
+
   int get total => allTasks.length;
   int get completed => allTasks.where((t) => t.isCompleted).length;
   int get pending => total - completed;

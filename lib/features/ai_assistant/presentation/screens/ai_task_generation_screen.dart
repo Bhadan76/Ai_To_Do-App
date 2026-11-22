@@ -75,8 +75,8 @@ class AITaskGenerationScreen extends StatelessWidget {
             taskController.titleController.text = 'Design new UI mockups';
             taskController.descriptionController.text =
                 'Create polished screens for the upcoming product review and share the first draft with your team.';
-            taskController.selectedCategory.value = 'Work';
-            taskController.selectedPriority.value = 'High Priority';
+            taskController.selectedCategory.value = '';
+            taskController.selectedPriority.value = 'HIGH';
             taskController.selectedReminder.value = '30 mins before';
             Get.toNamed(RouteNames.addTask);
           },

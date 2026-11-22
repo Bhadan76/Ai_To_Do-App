@@ -14,7 +14,16 @@ import '../../features/categories/presentation/controllers/category_controller.d
 import '../../features/categories/domain/repositories/category_repository.dart';
 import '../../features/onboarding/presentation/controllers/onboarding_controller.dart';
 import '../../features/home/presentation/controllers/home_controller.dart';
+import '../../features/tasks/data/datasources/task_api_data_source.dart';
+import '../../features/tasks/data/repositories/task_repository_impl.dart';
+import '../../features/tasks/domain/repositories/task_repository.dart';
+import '../../features/tasks/domain/usecases/task_usecases.dart';
 import '../../features/tasks/presentation/controllers/task_controller.dart';
+import '../../features/notifications/data/datasources/notification_api_data_source.dart';
+import '../../features/notifications/data/repositories/notification_repository_impl.dart';
+import '../../features/notifications/domain/repositories/notification_repository.dart';
+import '../../features/notifications/domain/usecases/notification_usecases.dart';
+import '../../features/notifications/presentation/controllers/notification_controller.dart';
 import '../../features/calendar/presentation/controllers/calendar_controller.dart';
 import '../../features/profile/presentation/controllers/profile_controller.dart';
 import '../../features/ai_assistant/presentation/controllers/ai_controller.dart';
@@ -60,6 +69,7 @@ class InitialBinding extends Bindings {
         registerUseCase: Get.find<RegisterUseCase>(),
         logoutUseCase: Get.find<LogoutUseCase>(),
         restoreSessionUseCase: Get.find<RestoreSessionUseCase>(),
+        tokenStorage: tokenStorage,
       ),
       permanent: true,
     );
@@ -110,13 +120,92 @@ class InitialBinding extends Bindings {
       permanent: true,
     );
 
+    // ── Task Data Layer ──────────────────────────────────────────
+    final taskDataSource = TaskApiDataSource(dioClient.dio);
+    Get.put<TaskApiDataSource>(taskDataSource, permanent: true);
+
+    final taskRepository = TaskRepositoryImpl(dataSource: taskDataSource);
+    Get.put<TaskRepository>(taskRepository, permanent: true);
+
+    Get.put<CreateTaskUseCase>(
+      CreateTaskUseCase(taskRepository),
+      permanent: true,
+    );
+    Get.put<ListTasksUseCase>(
+      ListTasksUseCase(taskRepository),
+      permanent: true,
+    );
+    Get.put<GetTaskByIdUseCase>(
+      GetTaskByIdUseCase(taskRepository),
+      permanent: true,
+    );
+    Get.put<UpdateTaskUseCase>(
+      UpdateTaskUseCase(taskRepository),
+      permanent: true,
+    );
+    Get.put<DeleteTaskUseCase>(
+      DeleteTaskUseCase(taskRepository),
+      permanent: true,
+    );
+    Get.put<RefreshTasksUseCase>(
+      RefreshTasksUseCase(taskRepository),
+      permanent: true,
+    );
+
+    // ── Task Controllers ──────────────────────────────────────────
+    Get.lazyPut<TaskController>(
+      () => TaskController(
+        createTaskUseCase: Get.find<CreateTaskUseCase>(),
+        listTasksUseCase: Get.find<ListTasksUseCase>(),
+        getTaskByIdUseCase: Get.find<GetTaskByIdUseCase>(),
+        updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
+        deleteTaskUseCase: Get.find<DeleteTaskUseCase>(),
+        refreshTasksUseCase: Get.find<RefreshTasksUseCase>(),
+      ),
+      fenix: true,
+    );
+
+    // ── Notification Data Layer ───────────────────────────────────
+    final notificationDataSource = NotificationApiDataSource(dioClient.dio);
+    Get.put<NotificationApiDataSource>(notificationDataSource, permanent: true);
+
+    final notificationRepository = NotificationRepositoryImpl(
+      dataSource: notificationDataSource,
+    );
+    Get.put<NotificationRepository>(notificationRepository, permanent: true);
+
+    Get.put<RegisterDeviceTokenUseCase>(
+      RegisterDeviceTokenUseCase(notificationRepository),
+      permanent: true,
+    );
+    Get.put<RemoveDeviceTokenUseCase>(
+      RemoveDeviceTokenUseCase(notificationRepository),
+      permanent: true,
+    );
+    Get.put<ParseNotificationUseCase>(
+      ParseNotificationUseCase(notificationRepository),
+      permanent: true,
+    );
+
+    // ── Notification Controller ───────────────────────────────────
+    Get.put<NotificationController>(
+      NotificationController(
+        registerDeviceTokenUseCase: Get.find<RegisterDeviceTokenUseCase>(),
+        removeDeviceTokenUseCase: Get.find<RemoveDeviceTokenUseCase>(),
+        parseNotificationUseCase: Get.find<ParseNotificationUseCase>(),
+      ),
+      permanent: true,
+    );
+
     // ── Other Controllers ─────────────────────────────────────────
     Get.put<OnboardingController>(OnboardingController(), permanent: true);
     Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
-    Get.lazyPut<TaskController>(() => TaskController(), fenix: true);
     Get.lazyPut<CalendarController>(() => CalendarController(), fenix: true);
     Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
     Get.lazyPut<AIController>(() => AIController(), fenix: true);
-    Get.lazyPut<StatisticsController>(() => StatisticsController(), fenix: true);
+    Get.lazyPut<StatisticsController>(
+      () => StatisticsController(),
+      fenix: true,
+    );
   }
 }

@@ -81,43 +81,43 @@ class ProfileScreen extends GetView<ProfileController> {
 
   Widget _buildprofileCard(BuildContext context) {
     return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(22),
-            child: Column(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          children: [
+            const CircleAvatar(
+              radius: 42,
+              backgroundColor: AppColors.lightPurple,
+              child: Icon(
+                Icons.person_rounded,
+                size: 48,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Bhadan',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const Text(
+              'bhadan@example.com',
+              style: TextStyle(color: AppColors.secondaryText),
+            ),
+            const SizedBox(height: 18),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                const CircleAvatar(
-                  radius: 42,
-                  backgroundColor: AppColors.lightPurple,
-                  child: Icon(
-                    Icons.person_rounded,
-                    size: 48,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Bhadan',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Text(
-                  'bhadan@example.com',
-                  style: TextStyle(color: AppColors.secondaryText),
-                ),
-                const SizedBox(height: 18),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ProfileMetric(value: '24', label: 'Tasks'),
-                    ProfileMetric(value: '18', label: 'Completed'),
-                    ProfileMetric(value: '75%', label: 'Progress'),
-                  ],
-                ),
+                ProfileMetric(value: '24', label: 'Tasks'),
+                ProfileMetric(value: '18', label: 'Completed'),
+                ProfileMetric(value: '75%', label: 'Progress'),
               ],
             ),
-          ),
-        );
+          ],
+        ),
+      ),
+    );
   }
 }
 

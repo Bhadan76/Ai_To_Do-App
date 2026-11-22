@@ -92,38 +92,42 @@ class LoginScreen extends GetView<AuthController> {
                 // Password field
                 _buildLabel('Password'),
                 const SizedBox(height: 8),
-                Obx(() => _buildTextField(
-                      controller: controller.passwordController,
-                      hint: 'Password',
-                      prefixIcon: Icons.lock_outline_rounded,
-                      obscureText: !controller.isPasswordVisible.value,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          controller.isPasswordVisible.value
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          color: AppColors.secondaryText,
-                          size: 20,
-                        ),
-                        onPressed: controller.togglePasswordVisibility,
+                Obx(
+                  () => _buildTextField(
+                    controller: controller.passwordController,
+                    hint: 'Password',
+                    prefixIcon: Icons.lock_outline_rounded,
+                    obscureText: !controller.isPasswordVisible.value,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        controller.isPasswordVisible.value
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: AppColors.secondaryText,
+                        size: 20,
                       ),
-                    )),
+                      onPressed: controller.togglePasswordVisibility,
+                    ),
+                  ),
+                ),
 
                 const SizedBox(height: 10),
 
                 // Error message
-                Obx(() => controller.errorMessage.value.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Text(
-                          controller.errorMessage.value,
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            color: AppColors.errorRed,
+                Obx(
+                  () => controller.errorMessage.value.isNotEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Text(
+                            controller.errorMessage.value,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.errorRed,
+                            ),
                           ),
-                        ),
-                      )
-                    : const SizedBox.shrink()),
+                        )
+                      : const SizedBox.shrink(),
+                ),
 
                 // Forgot password
                 Align(
@@ -167,23 +171,25 @@ class LoginScreen extends GetView<AuthController> {
                       ],
                     ),
                     child: Center(
-                      child: Obx(() => controller.isLoading.value
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.white,
+                      child: Obx(
+                        () => controller.isLoading.value
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.white,
+                                ),
+                              )
+                            : Text(
+                                'Login',
+                                style: GoogleFonts.inter(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
                               ),
-                            )
-                          : Text(
-                              'Login',
-                              style: GoogleFonts.inter(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.white,
-                              ),
-                            )),
+                      ),
                     ),
                   ),
                 ),

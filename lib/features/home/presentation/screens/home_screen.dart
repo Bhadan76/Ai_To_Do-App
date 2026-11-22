@@ -10,6 +10,7 @@ import '../../../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../../../shared/widgets/category_card.dart';
 import '../../../../../shared/widgets/stats_card.dart';
 import '../../../categories/presentation/controllers/category_controller.dart';
+import '../../../notifications/presentation/controllers/notification_controller.dart';
 import '../controllers/home_controller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -39,9 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final categoryController = Get.find<CategoryController>();
     return Scaffold(
-      body: SafeArea(
-        child: _buildBody(context, categoryController),
-      ),
+      body: SafeArea(child: _buildBody(context, categoryController)),
       bottomNavigationBar: Obx(
         () => AppBottomNavBar(
           currentIndex: controller.selectedNavIndex.value,
@@ -57,7 +56,59 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBody(BuildContext context, CategoryController categoryController) {
+  Widget _buildNotificationButton() {
+    if (!Get.isRegistered<NotificationController>()) {
+      return IconButton(
+        onPressed: () => Get.toNamed(RouteNames.notifications),
+        icon: const Icon(Icons.notifications_none_rounded, size: 26),
+      );
+    }
+
+    final notifController = Get.find<NotificationController>();
+    return Obx(() {
+      final count = notifController.unreadCount.value;
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          IconButton(
+            onPressed: () => Get.toNamed(RouteNames.notifications),
+            icon: const Icon(Icons.notifications_none_rounded, size: 26),
+          ),
+          if (count > 0)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(
+                  color: AppColors.errorRed,
+                  shape: BoxShape.circle,
+                ),
+                constraints: const BoxConstraints(
+                  minWidth: 16,
+                  minHeight: 16,
+                ),
+                child: Center(
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    CategoryController categoryController,
+  ) {
     return Obx(
       () => ListView(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
@@ -81,10 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: () => Get.toNamed(RouteNames.aiAssistant),
-                icon: const Icon(Icons.notifications_none_rounded),
-              ),
+              _buildNotificationButton(),
             ],
           ),
           const SizedBox(height: 20),
@@ -98,9 +146,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: Text(
                   "Today's Tasks",
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
               TextButton(
@@ -116,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 task: task,
                 onToggle: (_) => controller.toggleTaskComplete(task.id),
                 onTap: () =>
-                    Get.toNamed(RouteNames.taskDetails, arguments: task),
+                    Get.toNamed(RouteNames.taskDetails, arguments: task.id),
               ),
             ),
           ),
@@ -137,81 +185,31 @@ class _HomeScreenState extends State<HomeScreen> {
           if (categoryController.isLoading.value)
             const SizedBox(
               height: 70,
-              child: Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            )
+          else if (categoryController.categories.isEmpty)
+            const Text(
+              'No categories found.',
+              style: TextStyle(color: AppColors.secondaryText),
             )
           else
             Wrap(
               spacing: 10,
               runSpacing: 10,
-              children: [
-                _buildAddCategoryCard(context),
-                ...categoryController.categories
-                    .take(5)
-                    .map(
-                      (cat) => CategoryCard(
-                        category: cat.name,
-                        onTap: () => Get.toNamed(RouteNames.categories),
+              children: categoryController.categories
+                  .map(
+                    (cat) => CategoryCard(
+                      category: cat.name,
+                      onTap: () => Get.toNamed(
+                        RouteNames.allTasks,
+                        arguments: cat.name,
                       ),
                     ),
-              ],
+                  )
+                  .toList(),
             ),
           const SizedBox(height: AppSizes.md),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAddCategoryCard(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: () => Get.toNamed(RouteNames.categories),
-      child: Container(
-        width: 72,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkSurface : AppColors.white,
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.5),
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.add_rounded,
-                color: AppColors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Add',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

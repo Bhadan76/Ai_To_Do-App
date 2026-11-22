@@ -1,3 +1,4 @@
+import FirebaseCore
 import Flutter
 import UIKit
 
@@ -7,6 +8,9 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Firebase is configured via the default FirebaseApp, whose credentials
+    // come from the generated GoogleService-Info.plist.
+    FirebaseApp.configure()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

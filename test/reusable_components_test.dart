@@ -4,7 +4,7 @@ import 'package:daily_task_app/core/widgets/custom_text_field.dart';
 import 'package:daily_task_app/core/widgets/empty_state.dart';
 import 'package:daily_task_app/core/widgets/loading_indicator.dart';
 import 'package:daily_task_app/core/widgets/task_card.dart';
-import 'package:daily_task_app/shared/models/task_model.dart';
+import 'package:daily_task_app/features/tasks/domain/models/task.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -66,7 +66,7 @@ void main() {
             mainAxisSize: MainAxisSize.min,
             children: [
               TaskCard(
-                task: TaskModel(id: 'test', title: 'Plan the day'),
+                task: const TaskEntity(id: 'test', title: 'Plan the day'),
                 onToggle: (value) => completed = value,
               ),
               CategoryChip(

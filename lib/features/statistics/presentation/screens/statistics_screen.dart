@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../app/routes/route_names.dart';
-import '../../../../../core/constants/app_colors.dart';
+import '../../../../app/routes/route_names.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/widgets/bottom_nav_bar.dart';
+import '../controllers/statistics_controller.dart';
 
-class StatisticsScreen extends StatelessWidget {
+class StatisticsScreen extends GetView<StatisticsController> {
   const StatisticsScreen({super.key});
 
   @override
@@ -60,21 +61,31 @@ class StatisticsScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        const Card(
-          child: ListTile(
-            leading: Icon(Icons.check_circle_outline, color: AppColors.primary),
-            title: Text('18 tasks completed'),
-            subtitle: Text('75% of your weekly goal'),
+        Obx(
+          () => Card(
+            child: ListTile(
+              leading: Icon(
+                Icons.check_circle_outline,
+                color: AppColors.primary,
+              ),
+              title: Text('${controller.completed} tasks completed'),
+              subtitle: Text(
+                '${controller.total} total, '
+                '${(controller.progress * 100).round()}% complete',
+              ),
+            ),
           ),
         ),
-        const Card(
-          child: ListTile(
-            leading: Icon(
-              Icons.local_fire_department_outlined,
-              color: Colors.orange,
+        Obx(
+          () => Card(
+            child: ListTile(
+              leading: Icon(
+                Icons.local_fire_department_outlined,
+                color: Colors.orange,
+              ),
+              title: Text('${controller.pending} pending tasks'),
+              subtitle: const Text('Complete them to keep moving forward!'),
             ),
-            title: Text('4 day streak'),
-            subtitle: Text('Keep up the great work!'),
           ),
         ),
         FilledButton.icon(

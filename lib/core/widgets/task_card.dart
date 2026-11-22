@@ -1,17 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
-import '../../shared/models/task_model.dart';
+import '../utils/helpers.dart';
+import '../../features/categories/presentation/controllers/category_controller.dart';
+import '../../features/tasks/domain/models/task.dart';
 import 'custom_card.dart';
 
 class TaskCard extends StatelessWidget {
   const TaskCard({required this.task, this.onTap, this.onToggle, super.key});
 
-  final TaskModel task;
+  final TaskEntity task;
   final VoidCallback? onTap;
   final ValueChanged<bool>? onToggle;
+
+  String get categoryName {
+    final id = task.categoryId;
+    if (id == null || id.isEmpty) return '';
+    if (Get.isRegistered<CategoryController>()) {
+      return AppHelpers.firstWhereOrNull(
+            Get.find<CategoryController>().categories,
+            (c) => c.id == id,
+          )?.name ??
+          '';
+    }
+    return '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,17 +72,27 @@ class TaskCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${task.dueDate}, ${task.dueTime}',
+                    AppHelpers.formatDateTime(task.dueDate),
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       color: AppColors.secondaryText,
                     ),
                   ),
+                  if (categoryName.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      categoryName,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: AppHelpers.getCategoryColor(categoryName),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
             Icon(
-              Icons.more_vert_rounded,
+              Icons.chevron_right,
               color: AppColors.secondaryText,
               size: AppSizes.iconMd,
             ),

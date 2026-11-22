@@ -13,6 +13,7 @@ class RouteNames {
   static const String statistics = '/statistics';
   static const String categories = '/categories';
   static const String allTasks = '/all-tasks';
+  static const String notifications = '/notifications';
   static const String aiAssistant = '/ai-assistant';
   static const String aiTaskGeneration = '/ai-task-generation';
 }

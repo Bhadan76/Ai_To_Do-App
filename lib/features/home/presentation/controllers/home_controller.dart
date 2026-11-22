@@ -1,32 +1,40 @@
 import 'package:get/get.dart';
-import '../../../../../shared/models/task_model.dart';
-import '../../../../../app/routes/route_names.dart';
+
+import '../../../../core/utils/helpers.dart';
+import '../../../../app/routes/route_names.dart';
+import '../../../notifications/presentation/controllers/notification_controller.dart';
+import '../../../tasks/domain/models/task.dart';
+import '../../../tasks/presentation/controllers/task_controller.dart';
 
 class HomeController extends GetxController {
-  final RxList<TaskModel> tasks = <TaskModel>[].obs;
+  final RxList<TaskEntity> tasks = <TaskEntity>[].obs;
   final RxInt selectedNavIndex = 0.obs;
 
   @override
   void onInit() {
     super.onInit();
-    tasks.assignAll(MockTasks.tasks);
+    Get.find<TaskController>().loadTasks();
+
+    // Initialize FCM and register the device token now that the user is
+    // authenticated (covers both login and session restore flows).
+    if (Get.isRegistered<NotificationController>()) {
+      Get.find<NotificationController>().initialize();
+    }
   }
 
-  List<TaskModel> get todayTasks =>
-      tasks.where((t) => t.dueDate == 'Today').toList();
+  /// Tasks due today (any status; completed ones show as struck-through).
+  List<TaskEntity> get todayTasks =>
+      tasks.where((t) => AppHelpers.isDueToday(t.dueDate)).toList();
 
   int get totalTasks => tasks.length;
   int get completedTasks => tasks.where((t) => t.isCompleted).toList().length;
   int get progressPercent =>
       totalTasks == 0 ? 0 : ((completedTasks / totalTasks) * 100).round();
 
-  void toggleTaskComplete(String id) {
-    final index = tasks.indexWhere((t) => t.id == id);
-    if (index != -1) {
-      tasks[index].isCompleted = !tasks[index].isCompleted;
-      tasks.refresh();
-    }
-  }
+  void toggleTaskComplete(String id) =>
+      Get.find<TaskController>().toggleTaskComplete(id);
+
+  Future<void> refreshTasks() => Get.find<TaskController>().loadTasks();
 
   void changeNavIndex(int index) {
     selectedNavIndex.value = index;

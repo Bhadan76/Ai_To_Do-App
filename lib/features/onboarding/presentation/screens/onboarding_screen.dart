@@ -16,7 +16,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  static  final List<_OnboardData> _pages = [
+  static final List<_OnboardData> _pages = [
     _OnboardData(
       title: 'Stay Organized',
       subtitle: 'Keep track of your tasks\nand boost productivity.',
@@ -210,62 +210,60 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildNextButton() {
     return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: GestureDetector(
-              onTap: _next,
-              child: Container(
-                width: double.infinity,
-                height: AppSizes.buttonHeight,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.primary, AppColors.primarySecondary],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(100),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.35),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    _currentPage == _pages.length - 1
-                        ? 'Get Started →'
-                        : 'Next →',
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: GestureDetector(
+        onTap: _next,
+        child: Container(
+          width: double.infinity,
+          height: AppSizes.buttonHeight,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [AppColors.primary, AppColors.primarySecondary],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(100),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.35),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              _currentPage == _pages.length - 1 ? 'Get Started →' : 'Next →',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
               ),
             ),
-          );
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildDotIndicator() {
     return Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(_pages.length, (i) {
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: i == _currentPage ? 24 : 8,
-                height: 8,
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                decoration: BoxDecoration(
-                  color: i == _currentPage
-                      ? AppColors.primary
-                      : AppColors.borderColor,
-                  borderRadius: BorderRadius.circular(100),
-                ),
-              );
-            }),
-          );
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(_pages.length, (i) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          width: i == _currentPage ? 24 : 8,
+          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          decoration: BoxDecoration(
+            color: i == _currentPage
+                ? AppColors.primary
+                : AppColors.borderColor,
+            borderRadius: BorderRadius.circular(100),
+          ),
+        );
+      }),
+    );
   }
 }
 

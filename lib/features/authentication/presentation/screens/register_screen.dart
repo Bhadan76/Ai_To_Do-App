@@ -26,9 +26,9 @@ class RegisterScreen extends GetView<AuthController> {
             Text(
               'Create Account',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.darkNavy,
-                  ),
+                fontWeight: FontWeight.w700,
+                color: AppColors.darkNavy,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -61,23 +61,24 @@ class RegisterScreen extends GetView<AuthController> {
             // Password
             _buildLabel('Password'),
             const SizedBox(height: 8),
-            Obx(() => _buildTextField(
-
-                  controller: controller.passwordController,
-                  hint: 'Create a password',
-                  prefixIcon: Icons.lock_outline_rounded,
-                  obscureText: !controller.isPasswordVisible.value,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      controller.isPasswordVisible.value
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                      color: AppColors.secondaryText,
-                      size: 20,
-                    ),
-                    onPressed: controller.togglePasswordVisibility,
+            Obx(
+              () => _buildTextField(
+                controller: controller.passwordController,
+                hint: 'Create a password',
+                prefixIcon: Icons.lock_outline_rounded,
+                obscureText: !controller.isPasswordVisible.value,
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    controller.isPasswordVisible.value
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: AppColors.secondaryText,
+                    size: 20,
                   ),
-                )),
+                  onPressed: controller.togglePasswordVisibility,
+                ),
+              ),
+            ),
             const SizedBox(height: 8),
             Text(
               'Min 12 characters with lowercase, uppercase & number',
@@ -88,27 +89,31 @@ class RegisterScreen extends GetView<AuthController> {
             ),
 
             // Error message
-            Obx(() => controller.errorMessage.value.isNotEmpty
-                ? Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Text(
-                      controller.errorMessage.value,
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        color: AppColors.errorRed,
+            Obx(
+              () => controller.errorMessage.value.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Text(
+                        controller.errorMessage.value,
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.errorRed,
+                        ),
                       ),
-                    ),
-                  )
-                : const SizedBox.shrink()),
+                    )
+                  : const SizedBox.shrink(),
+            ),
 
             const SizedBox(height: 24),
 
             // Sign Up button
-            Obx(() => AppPrimaryButton(
-                  label: 'Sign Up',
-                  isLoading: controller.isLoading.value,
-                  onPressed: controller.register,
-                )),
+            Obx(
+              () => AppPrimaryButton(
+                label: 'Sign Up',
+                isLoading: controller.isLoading.value,
+                onPressed: controller.register,
+              ),
+            ),
           ],
         ),
       ),

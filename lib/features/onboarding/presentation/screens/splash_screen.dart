@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../app/routes/route_names.dart';
 import '../../../authentication/presentation/controllers/auth_controller.dart';
+import '../../../notifications/presentation/controllers/notification_controller.dart';
 import '../widgets/app_name.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -51,6 +52,9 @@ class _SplashScreenState extends State<SplashScreen>
 
         if (hasSession && mounted) {
           Get.offAllNamed(RouteNames.home);
+          if (Get.isRegistered<NotificationController>()) {
+            Get.find<NotificationController>().checkAndNavigatePendingTask();
+          }
         } else if (mounted) {
           Get.offAllNamed(RouteNames.onboarding);
         }
@@ -153,21 +157,19 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildDotLoader() {
     return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(3, (i) {
-                  return Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
-                      color: i == 0
-                          ? AppColors.primary
-                          : AppColors.borderColor,
-                      shape: BoxShape.circle,
-                    ),
-                  );
-                }),
-              );
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (i) {
+        return Container(
+          width: 8,
+          height: 8,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          decoration: BoxDecoration(
+            color: i == 0 ? AppColors.primary : AppColors.borderColor,
+            shape: BoxShape.circle,
+          ),
+        );
+      }),
+    );
   }
 
   Widget _buildCalendarClock() {
@@ -280,5 +282,3 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
-
-

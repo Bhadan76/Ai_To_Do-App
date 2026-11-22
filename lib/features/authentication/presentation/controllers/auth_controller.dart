@@ -1,9 +1,11 @@
-// ignore_for_file: prefer_initializing_formals
+// ignore_for_file: prefer_initializing_formals, unused_field
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../app/routes/route_names.dart';
+import '../../../../app/routes/route_names.dart';
+import '../../../../core/api/token_storage.dart';
+import '../../../notifications/presentation/controllers/notification_controller.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/auth_usecases.dart';
 
@@ -12,16 +14,19 @@ class AuthController extends GetxController {
   final RegisterUseCase _registerUseCase;
   final LogoutUseCase _logoutUseCase;
   final RestoreSessionUseCase _restoreSessionUseCase;
+  final TokenStorage _tokenStorage;
 
   AuthController({
     required LoginUseCase loginUseCase,
     required RegisterUseCase registerUseCase,
     required LogoutUseCase logoutUseCase,
     required RestoreSessionUseCase restoreSessionUseCase,
-  })  : _loginUseCase = loginUseCase,
-        _registerUseCase = registerUseCase,
-        _logoutUseCase = logoutUseCase,
-        _restoreSessionUseCase = restoreSessionUseCase;
+    required TokenStorage tokenStorage,
+  }) : _loginUseCase = loginUseCase,
+       _registerUseCase = registerUseCase,
+       _logoutUseCase = logoutUseCase,
+       _restoreSessionUseCase = restoreSessionUseCase,
+       _tokenStorage = tokenStorage;
 
   // Text controllers
   final emailController = TextEditingController();
@@ -33,6 +38,9 @@ class AuthController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxString errorMessage = ''.obs;
 
+  /// Whether a valid session is currently stored (access token present).
+  final RxBool isLoggedIn = false.obs;
+
   void togglePasswordVisibility() {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
@@ -42,8 +50,14 @@ class AuthController extends GetxController {
   Future<bool> restoreSession() async {
     try {
       final session = await _restoreSessionUseCase.call();
-      return session != null;
+      final hasSession = session != null;
+      isLoggedIn.value = hasSession;
+      if (hasSession) {
+        await registerNotificationToken();
+      }
+      return hasSession;
     } catch (_) {
+      isLoggedIn.value = false;
       return false;
     }
   }
@@ -64,6 +78,8 @@ class AuthController extends GetxController {
     try {
       await _loginUseCase.call(email: email, password: password);
       isLoading.value = false;
+      isLoggedIn.value = true;
+      await registerNotificationToken();
       _safeNavigateToHome();
     } on AuthException catch (e) {
       isLoading.value = false;
@@ -104,6 +120,8 @@ class AuthController extends GetxController {
     try {
       await _registerUseCase.call(name: name, email: email, password: password);
       isLoading.value = false;
+      isLoggedIn.value = true;
+      await registerNotificationToken();
       _safeNavigateToHome();
     } on AuthException catch (e) {
       isLoading.value = false;
@@ -118,12 +136,36 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     isLoading.value = true;
     try {
+      // Unregister this device's FCM token before the session is cleared.
+      // Failures here must never block the local logout.
+      if (Get.isRegistered<NotificationController>()) {
+        try {
+          await Get.find<NotificationController>().unregisterToken();
+        } catch (_) {
+          // Ignore token-unregistration failures.
+        }
+      }
       await _logoutUseCase.call();
     } catch (_) {
       // Logout always clears local session even on error
     } finally {
+      isLoggedIn.value = false;
       isLoading.value = false;
       _safeNavigateToLogin();
+    }
+  }
+
+  /// Registers the current device's FCM token with the backend after a
+  /// successful login, registration, or session restore.
+  ///
+  /// Failures never block the auth flow itself.
+  Future<void> registerNotificationToken() async {
+    try {
+      if (Get.isRegistered<NotificationController>()) {
+        await Get.find<NotificationController>().registerToken();
+      }
+    } catch (_) {
+      // Ignore: notifications are best-effort and must not fail auth.
     }
   }
 
@@ -134,6 +176,9 @@ class AuthController extends GetxController {
   void _safeNavigateToHome() {
     try {
       Get.offAllNamed(RouteNames.home);
+      if (Get.isRegistered<NotificationController>()) {
+        Get.find<NotificationController>().checkAndNavigatePendingTask();
+      }
     } catch (_) {
       // Navigation may fail in test environments
     }

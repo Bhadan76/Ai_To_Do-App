@@ -3,7 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../../../app/routes/route_names.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/utils/helpers.dart';
+import '../../../../../core/widgets/empty_state.dart';
 import '../../../../../shared/widgets/bottom_nav_bar.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -120,21 +123,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          for (final entry in [
-            ('Design new UI', '9:00 AM'),
-            ('Read documentation', '7:00 PM'),
-            ('Buy groceries', '8:00 PM'),
-          ])
-            Card(
-              child: ListTile(
-                leading: const Icon(
-                  Icons.radio_button_unchecked_rounded,
-                  color: AppColors.primary,
-                ),
-                title: Text(entry.$1),
-                subtitle: Text(entry.$2),
-              ),
-            ),
+          Obx(() {
+            final tasksToday = Get.find<HomeController>().tasks
+                .where((t) => AppHelpers.isDueToday(t.dueDate))
+                .toList();
+            if (tasksToday.isEmpty) {
+              return const EmptyState(
+                title: 'No tasks scheduled',
+                message: 'You have no tasks due today.',
+                icon: Icons.calendar_today_outlined,
+              );
+            }
+            return ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: tasksToday.length,
+              itemBuilder: (context, index) {
+                final task = tasksToday[index];
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(
+                      Icons.radio_button_unchecked_rounded,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(task.title),
+                    subtitle: Text(AppHelpers.formatDateTime(task.dueDate)),
+                  ),
+                );
+              },
+            );
+          }),
         ],
       ),
       bottomNavigationBar: AppBottomNavBar(

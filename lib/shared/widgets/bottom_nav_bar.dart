@@ -77,7 +77,7 @@ class AppBottomNavBar extends StatelessWidget {
                       child: Container(
                         width: 54,
                         height: 54,
-                        decoration:  BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: AppColors.primaryGradient,
                           shape: BoxShape.circle,
                           boxShadow: [
