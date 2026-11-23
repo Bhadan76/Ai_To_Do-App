@@ -39,7 +39,7 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
 
-    _timer = Timer(const Duration(seconds: 2), () async {
+    _timer = Timer(const Duration(seconds: 5), () async {
       if (mounted) {
         // Attempt to restore a previous session
         bool hasSession = false;

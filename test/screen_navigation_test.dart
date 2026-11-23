@@ -12,7 +12,6 @@ void main() {
     Get.testMode = true;
     await tester.pumpWidget(const TodoApp());
     await tester.pump(const Duration(seconds: 2));
-    await tester.pumpAndSettle();
 
     for (final route in [
       RouteNames.onboarding,
@@ -28,7 +27,8 @@ void main() {
       RouteNames.aiTaskGeneration,
     ]) {
       Get.toNamed(route);
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
       expect(
         tester.takeException(),
         isNull,

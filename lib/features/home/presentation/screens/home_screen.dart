@@ -11,6 +11,7 @@ import '../../../../../shared/widgets/category_card.dart';
 import '../../../../../shared/widgets/stats_card.dart';
 import '../../../categories/presentation/controllers/category_controller.dart';
 import '../../../notifications/presentation/controllers/notification_controller.dart';
+import '../../../profile/presentation/controllers/profile_controller.dart';
 import '../controllers/home_controller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -31,6 +32,12 @@ class _HomeScreenState extends State<HomeScreen> {
         final categoryController = Get.find<CategoryController>();
         if (categoryController.categories.isEmpty) {
           categoryController.loadCategories();
+        }
+      }
+      if (Get.isRegistered<ProfileController>()) {
+        final profileController = Get.find<ProfileController>();
+        if (profileController.profile.value == null) {
+          profileController.fetchProfile();
         }
       }
     });
@@ -54,6 +61,30 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
       ),
     );
+  }
+
+  Widget _buildGreeting(BuildContext context) {
+    if (!Get.isRegistered<ProfileController>()) {
+      return Text(
+        'Hi 👋',
+        style: Theme.of(
+          context,
+        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+      );
+    }
+
+    final profileController = Get.find<ProfileController>();
+    return Obx(() {
+      final profile = profileController.profile.value;
+      final name = profile?.name.trim() ?? '';
+      final greeting = name.isNotEmpty ? 'Hi, $name 👋' : 'Hi 👋';
+      return Text(
+        greeting,
+        style: Theme.of(
+          context,
+        ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+      );
+    });
   }
 
   Widget _buildNotificationButton() {
@@ -84,10 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: AppColors.errorRed,
                   shape: BoxShape.circle,
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 16,
-                  minHeight: 16,
-                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                 child: Center(
                   child: Text(
                     count > 99 ? '99+' : '$count',
@@ -119,11 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Hello, Bhadan 👋',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                    ),
+                    _buildGreeting(context),
                     const SizedBox(height: 5),
                     const Text(
                       "Let's finish today's tasks!",
@@ -200,10 +224,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   .map(
                     (cat) => CategoryCard(
                       category: cat.name,
-                      onTap: () => Get.toNamed(
-                        RouteNames.allTasks,
-                        arguments: cat.name,
-                      ),
+                      onTap: () =>
+                          Get.toNamed(RouteNames.allTasks, arguments: cat.name),
                     ),
                   )
                   .toList(),

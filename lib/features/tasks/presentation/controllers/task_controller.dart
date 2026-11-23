@@ -476,8 +476,8 @@ class TaskController extends GetxController {
       currentTask.value = updated;
       selectedStatus.value = updated.status;
       await Get.find<HomeController>().refreshTasks();
-      _showSnackbar('Success', 'Task updated successfully');
       Get.back();
+      _showSnackbar('Success', 'Task updated successfully');
     } on ApiErrorResponse catch (e) {
       _showSnackbar('Error', _errorMessage(e));
     } on TaskException catch (e) {
@@ -592,8 +592,15 @@ class TaskController extends GetxController {
   }
 
   void _showSnackbar(String title, String message) {
-    if (Get.context == null) return;
-    Get.snackbar(title, message);
+    if (Get.testMode || Get.context == null) return;
+    Get.snackbar(
+      title,
+      message,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 3),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+    );
   }
 
   @override

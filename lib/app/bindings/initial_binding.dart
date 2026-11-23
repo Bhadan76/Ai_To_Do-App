@@ -25,7 +25,15 @@ import '../../features/notifications/domain/repositories/notification_repository
 import '../../features/notifications/domain/usecases/notification_usecases.dart';
 import '../../features/notifications/presentation/controllers/notification_controller.dart';
 import '../../features/calendar/presentation/controllers/calendar_controller.dart';
+import '../../features/profile/data/datasources/profile_api_data_source.dart';
+import '../../features/profile/data/repositories/profile_repository_impl.dart';
+import '../../features/profile/domain/repositories/profile_repository.dart';
+import '../../features/profile/domain/usecases/profile_usecases.dart';
 import '../../features/profile/presentation/controllers/profile_controller.dart';
+import '../../features/ai_assistant/data/datasources/ai_api_data_source.dart';
+import '../../features/ai_assistant/data/repositories/ai_repository_impl.dart';
+import '../../features/ai_assistant/domain/repositories/ai_repository.dart';
+import '../../features/ai_assistant/domain/usecases/ai_usecases.dart';
 import '../../features/ai_assistant/presentation/controllers/ai_controller.dart';
 import '../../features/statistics/presentation/controllers/statistics_controller.dart';
 import '../theme/app_theme.dart';
@@ -197,12 +205,54 @@ class InitialBinding extends Bindings {
       permanent: true,
     );
 
+    // ── Profile Data Layer ────────────────────────────────────────
+    final profileDataSource = ProfileApiDataSource(dioClient.dio);
+    Get.put<ProfileApiDataSource>(profileDataSource, permanent: true);
+
+    final profileRepository = ProfileRepositoryImpl(
+      dataSource: profileDataSource,
+    );
+    Get.put<ProfileRepository>(profileRepository, permanent: true);
+
+    Get.put<GetProfileUseCase>(
+      GetProfileUseCase(profileRepository),
+      permanent: true,
+    );
+    Get.put<UpdateProfileUseCase>(
+      UpdateProfileUseCase(profileRepository),
+      permanent: true,
+    );
+
+    // ── AI Data Layer ───────────────────────────────────────────────
+    final aiDataSource = AIApiDataSource(dioClient.dio);
+    Get.put<AIApiDataSource>(aiDataSource, permanent: true);
+
+    final aiRepository = AIRepositoryImpl(dataSource: aiDataSource);
+    Get.put<AIRepository>(aiRepository, permanent: true);
+
+    Get.put<GenerateDailyPlanUseCase>(
+      GenerateDailyPlanUseCase(aiRepository),
+      permanent: true,
+    );
+
     // ── Other Controllers ─────────────────────────────────────────
     Get.put<OnboardingController>(OnboardingController(), permanent: true);
     Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
     Get.lazyPut<CalendarController>(() => CalendarController(), fenix: true);
-    Get.lazyPut<ProfileController>(() => ProfileController(), fenix: true);
-    Get.lazyPut<AIController>(() => AIController(), fenix: true);
+    Get.lazyPut<ProfileController>(
+      () => ProfileController(
+        getProfileUseCase: Get.find<GetProfileUseCase>(),
+        updateProfileUseCase: Get.find<UpdateProfileUseCase>(),
+      ),
+      fenix: true,
+    );
+    Get.lazyPut<AIController>(
+      () => AIController(
+        generateDailyPlanUseCase: Get.find<GenerateDailyPlanUseCase>(),
+        aiRepository: Get.find<AIRepository>(),
+      ),
+      fenix: true,
+    );
     Get.lazyPut<StatisticsController>(
       () => StatisticsController(),
       fenix: true,

@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import '../../../../app/routes/route_names.dart';
 import '../../../../core/api/token_storage.dart';
 import '../../../notifications/presentation/controllers/notification_controller.dart';
+import '../../../profile/presentation/controllers/profile_controller.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/auth_usecases.dart';
 
@@ -54,6 +55,7 @@ class AuthController extends GetxController {
       isLoggedIn.value = hasSession;
       if (hasSession) {
         await registerNotificationToken();
+        _refreshProfileSafely();
       }
       return hasSession;
     } catch (_) {
@@ -80,6 +82,7 @@ class AuthController extends GetxController {
       isLoading.value = false;
       isLoggedIn.value = true;
       await registerNotificationToken();
+      _refreshProfileSafely();
       _safeNavigateToHome();
     } on AuthException catch (e) {
       isLoading.value = false;
@@ -122,6 +125,7 @@ class AuthController extends GetxController {
       isLoading.value = false;
       isLoggedIn.value = true;
       await registerNotificationToken();
+      _refreshProfileSafely();
       _safeNavigateToHome();
     } on AuthException catch (e) {
       isLoading.value = false;
@@ -151,6 +155,11 @@ class AuthController extends GetxController {
     } finally {
       isLoggedIn.value = false;
       isLoading.value = false;
+      try {
+        if (Get.isRegistered<ProfileController>()) {
+          Get.find<ProfileController>().profile.value = null;
+        }
+      } catch (_) {}
       _safeNavigateToLogin();
     }
   }
@@ -166,6 +175,19 @@ class AuthController extends GetxController {
       }
     } catch (_) {
       // Ignore: notifications are best-effort and must not fail auth.
+    }
+  }
+
+  void _refreshProfileSafely() {
+    try {
+      if (Get.isRegistered<ProfileController>()) {
+        Get.find<ProfileController>().fetchProfile();
+      } else {
+        final controller = Get.find<ProfileController>();
+        controller.fetchProfile();
+      }
+    } catch (_) {
+      // Profile refresh is best-effort and must not fail auth.
     }
   }
 

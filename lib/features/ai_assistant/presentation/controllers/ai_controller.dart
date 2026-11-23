@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/api/api_error_response.dart';
+import '../../data/models/daily_plan_model.dart';
+import '../../domain/repositories/ai_repository.dart';
+import '../../domain/usecases/ai_usecases.dart';
+
 class ChatMessage {
   final String text;
   final bool isUser;
@@ -9,6 +14,26 @@ class ChatMessage {
 }
 
 class AIController extends GetxController {
+  AIController({
+    GenerateDailyPlanUseCase? generateDailyPlanUseCase,
+    GeneratePlanUseCase? generatePlanUseCase,
+    PlanDayUseCase? planDayUseCase,
+    AIRepository? repository,
+    AIRepository? aiRepository,
+  }) : _generateUseCase =
+           generateDailyPlanUseCase ??
+           generatePlanUseCase ??
+           planDayUseCase ??
+           (repository != null ? GenerateDailyPlanUseCase(repository) : null) ??
+           (aiRepository != null
+               ? GenerateDailyPlanUseCase(aiRepository)
+               : null),
+       _repository = repository ?? aiRepository;
+
+  final GenerateDailyPlanUseCase? _generateUseCase;
+  final AIRepository? _repository;
+
+  // ── Chat state (existing AI Assistant) ─────────────────────────────
   final messageController = TextEditingController();
   final RxList<ChatMessage> messages = <ChatMessage>[].obs;
   final RxBool isTyping = false.obs;
@@ -97,6 +122,106 @@ class AIController extends GetxController {
     return '$h:$m $period';
   }
 
+  // ── Smart Daily Planner state ───────────────────────────────────────
+  final Rx<DateTime> selectedDate = DateTime.now().obs;
+  final RxString availableStartTime = '09:00'.obs;
+  final RxString availableEndTime = '17:00'.obs;
+
+  final RxBool isLoading = false.obs;
+  final Rxn<DailyPlan> dailyPlan = Rxn<DailyPlan>();
+  final RxString errorMessage = ''.obs;
+
+  // Aliases for alternate state names.
+  RxBool get isPlanning => isLoading;
+  Rxn<DailyPlan> get plan => dailyPlan;
+  RxString get planError => errorMessage;
+  RxString get error => errorMessage;
+
+  void setPlanningDate(DateTime date) => selectedDate.value = date;
+  void setSelectedDate(DateTime date) => selectedDate.value = date;
+  void setAvailableStartTime(String value) => availableStartTime.value = value;
+  void setAvailableEndTime(String value) => availableEndTime.value = value;
+
+  void setAvailableStartTimeOfDay(TimeOfDay time) {
+    availableStartTime.value =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  void setAvailableEndTimeOfDay(TimeOfDay time) {
+    availableEndTime.value =
+        '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  String get planningDate =>
+      '${selectedDate.value.year.toString().padLeft(4, '0')}-'
+      '${selectedDate.value.month.toString().padLeft(2, '0')}-'
+      '${selectedDate.value.day.toString().padLeft(2, '0')}';
+
+  Future<DailyPlan?> generatePlan() async {
+    if (isLoading.value) return dailyPlan.value;
+
+    isLoading.value = true;
+    errorMessage.value = '';
+    try {
+      final result = await _generate(
+        date: planningDate,
+        availableStartTime: availableStartTime.value,
+        availableEndTime: availableEndTime.value,
+      );
+      dailyPlan.value = result;
+      return result;
+    } on ApiErrorResponse catch (e) {
+      errorMessage.value = e.displayMessage.isEmpty
+          ? 'Failed to generate plan. Please try again.'
+          : e.displayMessage;
+      return null;
+    } on AIException catch (e) {
+      errorMessage.value = e.message.isEmpty
+          ? 'Failed to generate plan. Please try again.'
+          : e.message;
+      return null;
+    } catch (e) {
+      errorMessage.value = 'Failed to generate plan. Please try again.';
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Alias method names.
+  Future<DailyPlan?> generateDailyPlan() => generatePlan();
+  Future<DailyPlan?> planDay() => generatePlan();
+  Future<DailyPlan?> generate() => generatePlan();
+
+  Future<DailyPlan?> _generate({
+    required String date,
+    required String availableStartTime,
+    required String availableEndTime,
+  }) async {
+    if (_generateUseCase != null) {
+      return _generateUseCase.call(
+        date: date,
+        availableStartTime: availableStartTime,
+        availableEndTime: availableEndTime,
+      );
+    }
+    if (_repository != null) {
+      return _repository.generateDailyPlan(
+        date: date,
+        availableStartTime: availableStartTime,
+        availableEndTime: availableEndTime,
+      );
+    }
+    throw const AIException('AI repository is not configured.');
+  }
+
+  void clearPlan() {
+    dailyPlan.value = null;
+    errorMessage.value = '';
+  }
+
+  void retry() => generatePlan();
+
   @override
   void onClose() {
     messageController.dispose();
@@ -104,3 +229,13 @@ class AIController extends GetxController {
     super.onClose();
   }
 }
+
+// Aliases for alternate controller naming conventions.
+typedef AIDailyPlannerController = AIController;
+typedef SmartDailyPlannerController = AIController;
+typedef SmartPlannerController = AIController;
+typedef AIPlanController = AIController;
+typedef DailyPlannerController = AIController;
+typedef DailyPlanController = AIController;
+typedef PlanController = AIController;
+typedef SmartTaskPlanningController = AIController;

@@ -10,9 +10,11 @@ import '../../features/tasks/presentation/screens/all_tasks_screen.dart';
 import '../../features/notifications/presentation/screens/notification_screen.dart';
 import '../../features/calendar/presentation/screens/calendar_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
+import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/statistics/presentation/screens/statistics_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_task_generation_screen.dart';
+import '../../features/ai_assistant/presentation/screens/ai_daily_planner_screen.dart';
 import 'route_names.dart';
 
 class AppPages {
@@ -37,6 +39,10 @@ class AppPages {
     GetPage(name: RouteNames.calendar, page: () => const CalendarScreen()),
     GetPage(name: RouteNames.categories, page: () => const AllTasksScreen()),
     GetPage(name: RouteNames.profile, page: () => const ProfileScreen()),
+    GetPage(
+      name: RouteNames.editProfile,
+      page: () => const EditProfileScreen(),
+    ),
     GetPage(name: RouteNames.statistics, page: () => const StatisticsScreen()),
     GetPage(
       name: RouteNames.aiAssistant,
@@ -45,6 +51,27 @@ class AppPages {
     GetPage(
       name: RouteNames.aiTaskGeneration,
       page: () => const AITaskGenerationScreen(),
+    ),
+    GetPage(
+      name: RouteNames.aiDailyPlanner,
+      page: () => const AIDailyPlannerScreen(),
+    ),
+    GetPage(
+      name: RouteNames.smartDailyPlanner,
+      page: () => const AIDailyPlannerScreen(),
+    ),
+    GetPage(name: RouteNames.aiPlan, page: () => const AIDailyPlannerScreen()),
+    GetPage(
+      name: RouteNames.dailyPlanner,
+      page: () => const AIDailyPlannerScreen(),
+    ),
+    GetPage(
+      name: RouteNames.smartPlanner,
+      page: () => const AIDailyPlannerScreen(),
+    ),
+    GetPage(
+      name: RouteNames.dailyPlan,
+      page: () => const AIDailyPlannerScreen(),
     ),
   ];
 }

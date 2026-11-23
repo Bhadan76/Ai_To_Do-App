@@ -40,17 +40,17 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(
-          title: Obx(
-            () => Text(controller.isEditingTask ? 'Edit Task' : 'Add Task'),
-          ),
-          leading: IconButton(
-            onPressed: Get.back,
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          ),
-        ),
-        body: SafeArea(child: _buildBody(context)),
-      );
+    appBar: AppBar(
+      title: Obx(
+        () => Text(controller.isEditingTask ? 'Edit Task' : 'Add Task'),
+      ),
+      leading: IconButton(
+        onPressed: Get.back,
+        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+      ),
+    ),
+    body: SafeArea(child: _buildBody(context)),
+  );
 
   Future<void> _showAddCategoryDialog(
     BuildContext context,

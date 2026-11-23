@@ -19,6 +19,10 @@ class AIAssistantScreen extends GetView<AIController> {
           icon: const Icon(Icons.auto_awesome_rounded),
         ),
         IconButton(
+          onPressed: () => Get.toNamed(RouteNames.aiDailyPlanner),
+          icon: const Icon(Icons.calendar_month_rounded),
+        ),
+        IconButton(
           onPressed: () => controller.messages.clear(),
           icon: const Icon(Icons.history_rounded),
         ),

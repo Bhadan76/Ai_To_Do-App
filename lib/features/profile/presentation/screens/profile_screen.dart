@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -6,10 +8,31 @@ import '../../../../../app/theme/app_theme.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../../../shared/widgets/profile_menu_item.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
 import '../controllers/profile_controller.dart';
+import '../widgets/profile_metric.dart';
 
-class ProfileScreen extends GetView<ProfileController> {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  ProfileController get controller => Get.find<ProfileController>();
+
+  @override
+  void initState() {
+    super.initState();
+    if (!Get.testMode &&
+        controller.profile.value == null &&
+        !controller.isLoading.value) {
+      controller.fetchProfile();
+    } else if (!Get.testMode) {
+      controller.loadProfileImage();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +42,7 @@ class ProfileScreen extends GetView<ProfileController> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          _buildprofileCard(context),
+          Obx(() => _buildprofileCard(context, controller)),
           const SizedBox(height: 14),
           Obx(
             () => SwitchListTile(
@@ -32,9 +55,15 @@ class ProfileScreen extends GetView<ProfileController> {
               ),
             ),
           ),
-          const ProfileMenuItem(
+          ProfileMenuItem(
+            icon: Icons.edit_rounded,
+            title: 'Edit Profile',
+            onTap: () => controller.goToEditProfile(),
+          ),
+          ProfileMenuItem(
             icon: Icons.notifications_none_rounded,
             title: 'Notifications',
+            onTap: () => Get.toNamed(RouteNames.notifications),
           ),
           const ProfileMenuItem(
             icon: Icons.language_rounded,
@@ -79,67 +108,121 @@ class ProfileScreen extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildprofileCard(BuildContext context) {
+  Widget _buildProfileMetrics() {
+    if (!Get.isRegistered<HomeController>()) {
+      return const Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ProfileMetric(value: '0', label: 'Tasks'),
+          ProfileMetric(value: '0', label: 'Completed'),
+          ProfileMetric(value: '0%', label: 'Progress'),
+        ],
+      );
+    }
+
+    final homeController = Get.find<HomeController>();
+    return Obx(() {
+      final total = homeController.totalTasks;
+      final completed = homeController.completedTasks;
+      final progress = homeController.progressPercent;
+
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ProfileMetric(value: '$total', label: 'Tasks'),
+          ProfileMetric(value: '$completed', label: 'Completed'),
+          ProfileMetric(value: '$progress%', label: 'Progress'),
+        ],
+      );
+    });
+  }
+
+  Widget _buildprofileCard(BuildContext context, ProfileController controller) {
+    final p = controller.profile.value;
+    final name = p?.name ?? 'User';
+    final email = p?.email ?? '';
+    final avatar = p?.avatar;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(22),
         child: Column(
           children: [
-            const CircleAvatar(
-              radius: 42,
-              backgroundColor: AppColors.lightPurple,
-              child: Icon(
-                Icons.person_rounded,
-                size: 48,
-                color: AppColors.primary,
-              ),
-            ),
+            Obx(() {
+              final localPath = controller.profileImagePath.value;
+              final hasLocalImage =
+                  localPath.isNotEmpty && File(localPath).existsSync();
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  CircleAvatar(
+                    radius: 42,
+                    backgroundColor: AppColors.lightPurple,
+                    backgroundImage: hasLocalImage
+                        ? FileImage(File(localPath))
+                        : (avatar != null && avatar.isNotEmpty)
+                        ? NetworkImage(avatar)
+                        : null,
+                    child:
+                        (!hasLocalImage && (avatar == null || avatar.isEmpty))
+                        ? const Icon(
+                            Icons.person_rounded,
+                            size: 48,
+                            color: AppColors.primary,
+                          )
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: -2,
+                    right: -2,
+                    child: Material(
+                      color: AppColors.primary,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: controller.pickProfileImage,
+                        child: const Padding(
+                          padding: EdgeInsets.all(6),
+                          child: Icon(Icons.add, size: 18, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }),
             const SizedBox(height: 12),
             Text(
-              'Bhadan',
+              name,
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const Text(
-              'bhadan@example.com',
-              style: TextStyle(color: AppColors.secondaryText),
-            ),
+            if (email.isNotEmpty)
+              Text(
+                email,
+                style: const TextStyle(color: AppColors.secondaryText),
+              ),
+            if (controller.isLoading.value) ...[
+              const SizedBox(height: 8),
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
+            if (controller.errorMessage.value.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                controller.errorMessage.value,
+                style: const TextStyle(color: AppColors.errorRed),
+              ),
+            ],
             const SizedBox(height: 18),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ProfileMetric(value: '24', label: 'Tasks'),
-                ProfileMetric(value: '18', label: 'Completed'),
-                ProfileMetric(value: '75%', label: 'Progress'),
-              ],
-            ),
+            _buildProfileMetrics(),
           ],
         ),
       ),
     );
   }
-}
-
-class ProfileMetric extends StatelessWidget {
-  final String value;
-  final String label;
-  const ProfileMetric({super.key, required this.value, required this.label});
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Text(
-        value,
-        style: const TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w700,
-          fontSize: 18,
-        ),
-      ),
-      Text(
-        label,
-        style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
-      ),
-    ],
-  );
 }
