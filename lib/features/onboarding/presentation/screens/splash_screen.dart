@@ -96,24 +96,23 @@ class _SplashScreenState extends State<SplashScreen>
                   width: 88,
                   height: 88,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.primary, AppColors.primarySecondary],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.35),
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.35),
                         blurRadius: 24,
                         offset: const Offset(0, 10),
                       ),
                     ],
                   ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: AppColors.white,
-                    size: 48,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Image.asset(
+                      'assets/app_icon/app_icon.png',
+                      width: 88,
+                      height: 88,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
