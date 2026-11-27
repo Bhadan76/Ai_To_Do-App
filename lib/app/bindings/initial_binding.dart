@@ -19,6 +19,7 @@ import '../../features/tasks/data/repositories/task_repository_impl.dart';
 import '../../features/tasks/domain/repositories/task_repository.dart';
 import '../../features/tasks/domain/usecases/task_usecases.dart';
 import '../../features/tasks/presentation/controllers/task_controller.dart';
+import '../../features/smart_reminders/presentation/controllers/smart_reminder_controller.dart';
 import '../../features/notifications/data/datasources/notification_api_data_source.dart';
 import '../../features/notifications/data/repositories/notification_repository_impl.dart';
 import '../../features/notifications/domain/repositories/notification_repository.dart';
@@ -161,14 +162,23 @@ class InitialBinding extends Bindings {
     );
 
     // ── Task Controllers ──────────────────────────────────────────
-    Get.lazyPut<TaskController>(
-      () => TaskController(
+    Get.put<TaskController>(
+      TaskController(
         createTaskUseCase: Get.find<CreateTaskUseCase>(),
         listTasksUseCase: Get.find<ListTasksUseCase>(),
         getTaskByIdUseCase: Get.find<GetTaskByIdUseCase>(),
         updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
         deleteTaskUseCase: Get.find<DeleteTaskUseCase>(),
         refreshTasksUseCase: Get.find<RefreshTasksUseCase>(),
+      ),
+      permanent: true,
+    );
+
+    // ── Smart Reminder Controller ────────────────────────────────
+    Get.lazyPut<SmartReminderController>(
+      () => SmartReminderController(
+        listTasksUseCase: Get.find<ListTasksUseCase>(),
+        updateTaskUseCase: Get.find<UpdateTaskUseCase>(),
       ),
       fenix: true,
     );
@@ -223,6 +233,14 @@ class InitialBinding extends Bindings {
       permanent: true,
     );
 
+    Get.put<ProfileController>(
+      ProfileController(
+        getProfileUseCase: Get.find<GetProfileUseCase>(),
+        updateProfileUseCase: Get.find<UpdateProfileUseCase>(),
+      ),
+      permanent: true,
+    );
+
     // ── AI Data Layer ───────────────────────────────────────────────
     final aiDataSource = AIApiDataSource(dioClient.dio);
     Get.put<AIApiDataSource>(aiDataSource, permanent: true);
@@ -235,27 +253,48 @@ class InitialBinding extends Bindings {
       permanent: true,
     );
 
+    Get.put<CreateConversationUseCase>(
+      CreateConversationUseCase(aiRepository),
+      permanent: true,
+    );
+
+    Get.put<GetConversationsUseCase>(
+      GetConversationsUseCase(aiRepository),
+      permanent: true,
+    );
+
+    Get.put<GetConversationUseCase>(
+      GetConversationUseCase(aiRepository),
+      permanent: true,
+    );
+
+    Get.put<SendMessageUseCase>(
+      SendMessageUseCase(aiRepository),
+      permanent: true,
+    );
+
+    Get.put<DeleteConversationUseCase>(
+      DeleteConversationUseCase(aiRepository),
+      permanent: true,
+    );
+
     // ── Other Controllers ─────────────────────────────────────────
     Get.put<OnboardingController>(OnboardingController(), permanent: true);
-    Get.lazyPut<HomeController>(() => HomeController(), fenix: true);
-    Get.lazyPut<CalendarController>(() => CalendarController(), fenix: true);
-    Get.lazyPut<ProfileController>(
-      () => ProfileController(
-        getProfileUseCase: Get.find<GetProfileUseCase>(),
-        updateProfileUseCase: Get.find<UpdateProfileUseCase>(),
-      ),
-      fenix: true,
-    );
+    Get.put<HomeController>(HomeController(), permanent: true);
+    Get.put<CalendarController>(CalendarController(), permanent: true);
     Get.lazyPut<AIController>(
       () => AIController(
         generateDailyPlanUseCase: Get.find<GenerateDailyPlanUseCase>(),
+        createConversationUseCase: Get.find<CreateConversationUseCase>(),
+        getConversationsUseCase: Get.find<GetConversationsUseCase>(),
+        getConversationUseCase: Get.find<GetConversationUseCase>(),
+        sendMessageUseCase: Get.find<SendMessageUseCase>(),
+        deleteConversationUseCase: Get.find<DeleteConversationUseCase>(),
+        createTaskUseCase: Get.find<CreateTaskUseCase>(),
         aiRepository: Get.find<AIRepository>(),
       ),
       fenix: true,
     );
-    Get.lazyPut<StatisticsController>(
-      () => StatisticsController(),
-      fenix: true,
-    );
+    Get.put<StatisticsController>(StatisticsController(), permanent: true);
   }
 }

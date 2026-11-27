@@ -9,7 +9,8 @@ import '../../../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({super.key});
+  final bool embedInNav;
+  const CalendarScreen({super.key, this.embedInNav = false});
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();
@@ -155,17 +156,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
           }),
         ],
       ),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: 1,
-        onTap: (index) {
-          if (index == 0) Get.offAllNamed(RouteNames.home);
-          if (index == 1) Get.offNamed(RouteNames.calendar);
-          if (index == 2) Get.toNamed(RouteNames.addTask);
-          if (index == 3) Get.offNamed(RouteNames.statistics);
-          if (index == 4) Get.offNamed(RouteNames.profile);
-        },
-      ),
+      bottomNavigationBar: widget.embedInNav
+          ? null
+          : AppBottomNavBar(
+              currentIndex: 1,
+              onTap: (index) {
+                if (Get.isRegistered<HomeController>()) {
+                  Get.find<HomeController>().changeNavIndex(index);
+                }
+              },
+            ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'calendar_fab',
         shape: const CircleBorder(),
         onPressed: () => Get.toNamed(RouteNames.addTask),
         child: const Icon(Icons.add),

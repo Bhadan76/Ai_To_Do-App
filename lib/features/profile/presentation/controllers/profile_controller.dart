@@ -53,6 +53,11 @@ class ProfileController extends GetxController {
   final RxString successMessage = ''.obs;
   final RxString profileImagePath = ''.obs;
 
+  // In-memory cache metadata.
+  DateTime? _cachedAt;
+  Future<void>? _fetchInFlight;
+  static const Duration _cacheTtl = Duration(minutes: 5);
+
   final ImagePicker _picker = ImagePicker();
 
   bool get hasProfile => profile.value != null;
@@ -87,14 +92,57 @@ class ProfileController extends GetxController {
     profileImagePath.value = '';
   }
 
-  Future<void> fetchProfile() async {
-    if (isLoading.value) return;
-    isLoading.value = true;
+  bool get _isCacheStale =>
+      _cachedAt == null || DateTime.now().difference(_cachedAt!) > _cacheTtl;
+
+  Future<void> fetchProfile({bool forceRefresh = false}) async {
+    // Cache-first: serve cached profile immediately when available.
+    if (!forceRefresh && profile.value != null) {
+      if (_isCacheStale) {
+        _refreshProfileInBackground();
+      }
+      return;
+    }
+
+    // Deduplicate concurrent requests.
+    if (_fetchInFlight != null) {
+      return _fetchInFlight;
+    }
+
+    final future = _fetchProfile(background: false);
+    _fetchInFlight = future;
+    try {
+      await future;
+    } finally {
+      if (_fetchInFlight == future) {
+        _fetchInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _refreshProfileInBackground() async {
+    if (_fetchInFlight != null) return;
+    final future = _fetchProfile(background: true);
+    _fetchInFlight = future;
+    try {
+      await future;
+    } finally {
+      if (_fetchInFlight == future) {
+        _fetchInFlight = null;
+      }
+    }
+  }
+
+  Future<void> _fetchProfile({bool background = false}) async {
+    if (!background) {
+      isLoading.value = true;
+    }
     errorMessage.value = '';
     try {
       final result = await _getProfileOrRepository();
       profile.value = result;
       nameController.text = result.name;
+      _cachedAt = DateTime.now();
     } on ApiErrorResponse catch (e) {
       errorMessage.value = e.displayMessage;
       _handleUnauthorized(e);
@@ -103,14 +151,22 @@ class ProfileController extends GetxController {
     } catch (e) {
       errorMessage.value = e.toString().replaceFirst('Exception: ', '');
     } finally {
-      isLoading.value = false;
+      if (!background) {
+        isLoading.value = false;
+      }
     }
-    if (!Get.testMode) {
+    if (!Get.testMode && !background) {
       await loadProfileImage();
     }
   }
 
-  Future<void> refreshProfile() => fetchProfile();
+  Future<void> refreshProfile() async {
+    _cachedAt = null;
+    try {
+      Get.find<ProfileRepository>().clearCache();
+    } catch (_) {}
+    return fetchProfile(forceRefresh: true);
+  }
 
   Future<ProfileEntity?> updateProfile({
     String? name,
@@ -142,6 +198,7 @@ class ProfileController extends GetxController {
       );
       profile.value = result;
       nameController.text = result.name;
+      _cachedAt = DateTime.now();
       successMessage.value = 'Profile updated successfully.';
       _safeSnackbar('Success', successMessage.value);
       return result;
@@ -167,6 +224,17 @@ class ProfileController extends GetxController {
 
   void logout() {
     Get.find<AuthController>().logout();
+  }
+
+  void clearCache() {
+    profile.value = null;
+    _cachedAt = null;
+    _fetchInFlight = null;
+    errorMessage.value = '';
+    successMessage.value = '';
+    try {
+      Get.find<ProfileRepository>().clearCache();
+    } catch (_) {}
   }
 
   void goToEditProfile() {

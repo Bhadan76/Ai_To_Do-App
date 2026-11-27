@@ -7,6 +7,12 @@ import '../../../../app/routes/route_names.dart';
 import '../../../../core/api/token_storage.dart';
 import '../../../notifications/presentation/controllers/notification_controller.dart';
 import '../../../profile/presentation/controllers/profile_controller.dart';
+import '../../../home/presentation/controllers/home_controller.dart';
+import '../../../categories/presentation/controllers/category_controller.dart';
+import '../../../tasks/presentation/controllers/task_controller.dart';
+import '../../../tasks/domain/repositories/task_repository.dart';
+import '../../../categories/domain/repositories/category_repository.dart';
+import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/auth_usecases.dart';
 
@@ -54,7 +60,8 @@ class AuthController extends GetxController {
       final hasSession = session != null;
       isLoggedIn.value = hasSession;
       if (hasSession) {
-        await registerNotificationToken();
+        // Do not block session restore on best-effort notification registration.
+        registerNotificationToken();
         _refreshProfileSafely();
       }
       return hasSession;
@@ -78,6 +85,7 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
+      _clearUserCaches();
       await _loginUseCase.call(email: email, password: password);
       isLoading.value = false;
       isLoggedIn.value = true;
@@ -121,6 +129,7 @@ class AuthController extends GetxController {
     errorMessage.value = '';
 
     try {
+      _clearUserCaches();
       await _registerUseCase.call(name: name, email: email, password: password);
       isLoading.value = false;
       isLoggedIn.value = true;
@@ -155,11 +164,7 @@ class AuthController extends GetxController {
     } finally {
       isLoggedIn.value = false;
       isLoading.value = false;
-      try {
-        if (Get.isRegistered<ProfileController>()) {
-          Get.find<ProfileController>().profile.value = null;
-        }
-      } catch (_) {}
+      _clearUserCaches();
       _safeNavigateToLogin();
     }
   }
@@ -195,6 +200,38 @@ class AuthController extends GetxController {
   void goToForgotPassword() {}
 
   /// Navigate to home safely (handles test environment without binding).
+  void _clearUserCaches() {
+    try {
+      if (Get.isRegistered<TaskController>()) {
+        Get.find<TaskController>().clearCache();
+      }
+    } catch (_) {}
+    try {
+      if (Get.isRegistered<CategoryController>()) {
+        Get.find<CategoryController>().clearCache();
+      }
+    } catch (_) {}
+    try {
+      if (Get.isRegistered<ProfileController>()) {
+        Get.find<ProfileController>().clearCache();
+      }
+    } catch (_) {}
+    try {
+      Get.find<TaskRepository>().clearCache();
+    } catch (_) {}
+    try {
+      Get.find<CategoryRepository>().clearCache();
+    } catch (_) {}
+    try {
+      Get.find<ProfileRepository>().clearCache();
+    } catch (_) {}
+    try {
+      if (Get.isRegistered<HomeController>()) {
+        Get.find<HomeController>().tasks.clear();
+      }
+    } catch (_) {}
+  }
+
   void _safeNavigateToHome() {
     try {
       Get.offAllNamed(RouteNames.home);

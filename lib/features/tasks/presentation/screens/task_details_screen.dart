@@ -120,6 +120,27 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     Text(
                       'Reminder   •   ${task.reminderAt != null ? AppHelpers.formatDateTime(task.reminderAt) : 'On Time'}',
                     ),
+                    if (task.reminderAt != null &&
+                        task.reminderAt!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'AI Smart Reminder • Scheduled',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     Text('Priority   •   ${task.priority}'),
                     const SizedBox(height: 12),

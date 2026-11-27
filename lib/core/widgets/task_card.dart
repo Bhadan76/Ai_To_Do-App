@@ -78,6 +78,28 @@ class TaskCard extends StatelessWidget {
                       color: AppColors.secondaryText,
                     ),
                   ),
+                  if (task.reminderAt != null &&
+                      task.reminderAt!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome_rounded,
+                          size: 12,
+                          color: AppColors.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'AI reminder • ${AppHelpers.formatDateTime(task.reminderAt)}',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   if (categoryName.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(

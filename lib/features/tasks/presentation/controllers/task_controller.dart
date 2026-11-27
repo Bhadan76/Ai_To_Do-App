@@ -8,6 +8,7 @@ import '../../../../core/utils/helpers.dart';
 import '../../../categories/presentation/controllers/category_controller.dart';
 import '../../../home/presentation/controllers/home_controller.dart';
 import '../../domain/models/task.dart';
+import '../../domain/repositories/task_repository.dart';
 import '../../domain/usecases/task_usecases.dart';
 
 class TaskController extends GetxController {
@@ -48,6 +49,13 @@ class TaskController extends GetxController {
 
   // Task list state (HomeScreen and AllTasksScreen).
   final RxBool isLoadingTasks = false.obs;
+
+  // In-memory cache metadata for task list.
+  DateTime? _tasksCachedAt;
+  Future<void>? _loadTasksInFlight;
+  String? _loadTasksKey;
+  int _taskLoadToken = 0;
+  static const Duration _taskCacheTtl = Duration(minutes: 2);
 
   // Filters applied when loading tasks.
   final RxString filterStatus = ''.obs;
@@ -105,9 +113,76 @@ class TaskController extends GetxController {
 
   // ── Task list ────────────────────────────────────────────────────
 
-  Future<void> loadTasks({int page = 1, int pageSize = 20}) async {
+  bool get _tasksStale =>
+      _tasksCachedAt == null ||
+      DateTime.now().difference(_tasksCachedAt!) > _taskCacheTtl;
+
+  String _taskLoadKey(int page, int pageSize) =>
+      '$page|$pageSize|${filterStatus.value}|${filterPriority.value}|${filterCategoryId.value}|${sortBy.value}|${sortOrder.value}';
+
+  Future<void> loadTasks({
+    int page = 1,
+    int pageSize = 20,
+    bool forceRefresh = false,
+  }) async {
     if (Get.testMode) return;
-    isLoadingTasks.value = true;
+    final home = Get.find<HomeController>();
+    final hasCache = home.tasks.isNotEmpty;
+    final key = _taskLoadKey(page, pageSize);
+
+    // Cache-first: serve cached tasks immediately when available.
+    if (!forceRefresh && hasCache) {
+      if (_tasksStale) {
+        _refreshTasksInBackground(page, pageSize, key);
+      }
+      return;
+    }
+
+    // Deduplicate identical concurrent requests.
+    if (_loadTasksInFlight != null && _loadTasksKey == key) {
+      return _loadTasksInFlight;
+    }
+
+    final future = _fetchTasks(page, pageSize, key);
+    _loadTasksInFlight = future;
+    _loadTasksKey = key;
+    try {
+      await future;
+    } finally {
+      if (_loadTasksInFlight == future) {
+        _loadTasksInFlight = null;
+        _loadTasksKey = null;
+      }
+    }
+  }
+
+  Future<void> _refreshTasksInBackground(int page, int pageSize, String key) async {
+    if (_loadTasksInFlight != null) return;
+    final future = _fetchTasks(page, pageSize, key, background: true);
+    _loadTasksInFlight = future;
+    _loadTasksKey = key;
+    try {
+      await future;
+    } finally {
+      if (_loadTasksInFlight == future) {
+        _loadTasksInFlight = null;
+        _loadTasksKey = null;
+      }
+    }
+  }
+
+  Future<void> _fetchTasks(
+    int page,
+    int pageSize,
+    String key, {
+    bool background = false,
+  }) async {
+    final home = Get.find<HomeController>();
+    final hasCache = home.tasks.isNotEmpty;
+    if (!background && !hasCache) {
+      isLoadingTasks.value = true;
+    }
+    final token = ++_taskLoadToken;
     try {
       final result = await _listTasksUseCase.call(
         page: page,
@@ -120,24 +195,40 @@ class TaskController extends GetxController {
         sortBy: sortBy.value,
         sortOrder: sortOrder.value,
       );
-      Get.find<HomeController>().tasks.assignAll(result.items);
+      // Prevent stale responses from overwriting newer changes.
+      if (token != _taskLoadToken) return;
+      home.tasks.assignAll(result.items);
+      _tasksCachedAt = DateTime.now();
     } on ApiErrorResponse catch (e) {
-      _showSnackbar('Error', _errorMessage(e));
+      if (token == _taskLoadToken) {
+        _showSnackbar('Error', _errorMessage(e));
+      }
     } on TaskException catch (e) {
-      _showSnackbar('Error', e.message);
+      if (token == _taskLoadToken) {
+        _showSnackbar('Error', e.message);
+      }
     } catch (_) {
-      _showSnackbar('Error', 'Failed to load tasks. Please try again.');
+      if (token == _taskLoadToken) {
+        _showSnackbar('Error', 'Failed to load tasks. Please try again.');
+      }
     } finally {
-      isLoadingTasks.value = false;
+      if (!background && !hasCache) {
+        isLoadingTasks.value = false;
+      }
     }
   }
 
   Future<void> refreshTasks({int page = 1, int pageSize = 20}) async {
-    final result = await _refreshTasksUseCase.call(
-      page: page,
-      pageSize: pageSize,
-    );
-    Get.find<HomeController>().tasks.assignAll(result.items);
+    try {
+      final result = await _refreshTasksUseCase.call(
+        page: page,
+        pageSize: pageSize,
+      );
+      Get.find<HomeController>().tasks.assignAll(result.items);
+      _tasksCachedAt = DateTime.now();
+    } catch (_) {
+      // Keep existing cached data on failure.
+    }
   }
 
   // ── Add Task ─────────────────────────────────────────────────────
@@ -298,6 +389,7 @@ class TaskController extends GetxController {
   }
 
   Future<void> addTask() async {
+    _taskLoadToken++;
     if (titleController.text.trim().isEmpty) {
       _showSnackbar('Error', 'Please enter a task title');
       return;
@@ -436,6 +528,7 @@ class TaskController extends GetxController {
   }
 
   Future<void> updateTask() async {
+    _taskLoadToken++;
     final task = currentTask.value;
     if (task == null) {
       addTask();
@@ -491,6 +584,7 @@ class TaskController extends GetxController {
 
   /// Updates only the status (used by the details screen and toggling).
   Future<void> updateStatus(String id, String status) async {
+    _taskLoadToken++;
     isLoading.value = true;
     try {
       final updated = await _updateTaskUseCase.call(id, status: status);
@@ -524,6 +618,7 @@ class TaskController extends GetxController {
   }
 
   Future<void> deleteTask(String id) async {
+    _taskLoadToken++;
     isLoading.value = true;
     try {
       await _deleteTaskUseCase.call(id);
@@ -584,6 +679,19 @@ class TaskController extends GetxController {
       default:
         return 'On Time';
     }
+  }
+
+  void clearCache() {
+    try {
+      Get.find<HomeController>().tasks.clear();
+    } catch (_) {}
+    _tasksCachedAt = null;
+    _loadTasksInFlight = null;
+    _loadTasksKey = null;
+    _taskLoadToken++;
+    try {
+      Get.find<TaskRepository>().clearCache();
+    } catch (_) {}
   }
 
   String _errorMessage(ApiErrorResponse error) {

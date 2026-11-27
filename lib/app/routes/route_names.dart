@@ -23,4 +23,5 @@ class RouteNames {
   static const String dailyPlanner = '/daily-planner';
   static const String smartPlanner = '/smart-planner';
   static const String dailyPlan = '/daily-plan';
+  static const String smartReminders = '/smart-reminders';
 }

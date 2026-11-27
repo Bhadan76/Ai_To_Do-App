@@ -13,7 +13,8 @@ import '../controllers/profile_controller.dart';
 import '../widgets/profile_metric.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool embedInNav;
+  const ProfileScreen({super.key, this.embedInNav = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -25,11 +26,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    if (!Get.testMode &&
-        controller.profile.value == null &&
-        !controller.isLoading.value) {
+    if (!Get.testMode) {
       controller.fetchProfile();
-    } else if (!Get.testMode) {
       controller.loadProfileImage();
     }
   }
@@ -87,6 +85,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           ListTile(
             leading: const Icon(
+              Icons.notifications_active_outlined,
+              color: AppColors.primary,
+            ),
+            title: const Text('Smart Reminders'),
+            onTap: () => Get.toNamed(RouteNames.smartReminders),
+          ),
+          ListTile(
+            leading: const Icon(
               Icons.logout_rounded,
               color: AppColors.errorRed,
             ),
@@ -95,16 +101,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: 4,
-        onTap: (index) {
-          if (index == 0) Get.offAllNamed(RouteNames.home);
-          if (index == 1) Get.offNamed(RouteNames.calendar);
-          if (index == 2) Get.toNamed(RouteNames.addTask);
-          if (index == 3) Get.offNamed(RouteNames.statistics);
-          if (index == 4) Get.offNamed(RouteNames.profile);
-        },
-      ),
+      bottomNavigationBar: widget.embedInNav
+          ? null
+          : AppBottomNavBar(
+              currentIndex: 4,
+              onTap: (index) {
+                if (Get.isRegistered<HomeController>()) {
+                  Get.find<HomeController>().changeNavIndex(index);
+                }
+              },
+            ),
     );
   }
 

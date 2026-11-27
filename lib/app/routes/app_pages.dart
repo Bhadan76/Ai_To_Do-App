@@ -15,6 +15,7 @@ import '../../features/statistics/presentation/screens/statistics_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_assistant_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_task_generation_screen.dart';
 import '../../features/ai_assistant/presentation/screens/ai_daily_planner_screen.dart';
+import '../../features/smart_reminders/presentation/screens/smart_reminder_screen.dart';
 import 'route_names.dart';
 
 class AppPages {
@@ -72,6 +73,10 @@ class AppPages {
     GetPage(
       name: RouteNames.dailyPlan,
       page: () => const AIDailyPlannerScreen(),
+    ),
+    GetPage(
+      name: RouteNames.smartReminders,
+      page: () => const SmartReminderScreen(),
     ),
   ];
 }

@@ -9,9 +9,13 @@ import '../../../../../core/widgets/task_card.dart';
 import '../../../../../shared/widgets/bottom_nav_bar.dart';
 import '../../../../../shared/widgets/category_card.dart';
 import '../../../../../shared/widgets/stats_card.dart';
+import '../../../calendar/presentation/screens/calendar_screen.dart';
 import '../../../categories/presentation/controllers/category_controller.dart';
 import '../../../notifications/presentation/controllers/notification_controller.dart';
 import '../../../profile/presentation/controllers/profile_controller.dart';
+import '../../../profile/presentation/screens/profile_screen.dart';
+import '../../../statistics/presentation/screens/statistics_screen.dart';
+import '../../../tasks/presentation/controllers/task_controller.dart';
 import '../controllers/home_controller.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -28,17 +32,15 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      debugPrint('[Home] Triggering concurrent initial data loading');
       if (Get.isRegistered<CategoryController>()) {
-        final categoryController = Get.find<CategoryController>();
-        if (categoryController.categories.isEmpty) {
-          categoryController.loadCategories();
-        }
+        Get.find<CategoryController>().loadCategories();
       }
       if (Get.isRegistered<ProfileController>()) {
-        final profileController = Get.find<ProfileController>();
-        if (profileController.profile.value == null) {
-          profileController.fetchProfile();
-        }
+        Get.find<ProfileController>().fetchProfile();
+      }
+      if (Get.isRegistered<TaskController>()) {
+        Get.find<TaskController>().loadTasks();
       }
     });
   }
@@ -47,19 +49,36 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final categoryController = Get.find<CategoryController>();
     return Scaffold(
-      body: SafeArea(child: _buildBody(context, categoryController)),
+      body: Obx(() {
+        return IndexedStack(
+          index: controller.selectedNavIndex.value,
+          children: [
+            SafeArea(child: _buildBody(context, categoryController)),
+            const CalendarScreen(embedInNav: true),
+            const SizedBox.shrink(), // Index 2 is Center Add Task action
+            const StatisticsScreen(embedInNav: true),
+            const ProfileScreen(embedInNav: true),
+          ],
+        );
+      }),
       bottomNavigationBar: Obx(
         () => AppBottomNavBar(
           currentIndex: controller.selectedNavIndex.value,
           onTap: controller.changeNavIndex,
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () => Get.toNamed(RouteNames.aiAssistant),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
-      ),
+      floatingActionButton: Obx(() {
+        if (controller.selectedNavIndex.value != 0) {
+          return const SizedBox.shrink();
+        }
+        return FloatingActionButton(
+          heroTag: 'home_fab',
+          shape: const CircleBorder(),
+          onPressed: () => Get.toNamed(RouteNames.aiAssistant),
+          backgroundColor: AppColors.primary,
+          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+        );
+      }),
     );
   }
 

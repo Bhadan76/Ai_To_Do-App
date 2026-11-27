@@ -39,27 +39,30 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _animController, curve: Curves.easeOut));
     _animController.forward();
 
-    _timer = Timer(const Duration(seconds: 5), () async {
-      if (mounted) {
-        // Attempt to restore a previous session
-        bool hasSession = false;
-        try {
-          final authController = Get.find<AuthController>();
-          hasSession = await authController.restoreSession();
-        } catch (_) {
-          // AuthController not registered or restore failed
-        }
+    // Restore the session as soon as possible instead of waiting for a
+    // fixed splash delay. The animation still plays while this runs.
+    _restoreSession();
+  }
 
-        if (hasSession && mounted) {
-          Get.offAllNamed(RouteNames.home);
-          if (Get.isRegistered<NotificationController>()) {
-            Get.find<NotificationController>().checkAndNavigatePendingTask();
-          }
-        } else if (mounted) {
-          Get.offAllNamed(RouteNames.onboarding);
-        }
+  Future<void> _restoreSession() async {
+    bool hasSession = false;
+    try {
+      final authController = Get.find<AuthController>();
+      hasSession = await authController.restoreSession();
+    } catch (_) {
+      // AuthController not registered or restore failed
+    }
+
+    if (!mounted) return;
+
+    if (hasSession) {
+      Get.offAllNamed(RouteNames.home);
+      if (Get.isRegistered<NotificationController>()) {
+        Get.find<NotificationController>().checkAndNavigatePendingTask();
       }
-    });
+    } else {
+      Get.offAllNamed(RouteNames.onboarding);
+    }
   }
 
   @override

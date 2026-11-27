@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/utils/helpers.dart';
@@ -13,6 +14,7 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    debugPrint('[HomeController] onInit initialized');
     Get.find<TaskController>().loadTasks();
 
     // Initialize FCM and register the device token now that the user is
@@ -34,20 +36,17 @@ class HomeController extends GetxController {
   void toggleTaskComplete(String id) =>
       Get.find<TaskController>().toggleTaskComplete(id);
 
-  Future<void> refreshTasks() => Get.find<TaskController>().loadTasks();
+  Future<void> refreshTasks() =>
+      Get.find<TaskController>().loadTasks(forceRefresh: true);
 
   void changeNavIndex(int index) {
-    selectedNavIndex.value = index;
-    if (index == 0) {
-      Get.offAllNamed(RouteNames.home);
-    } else if (index == 1) {
-      Get.offNamed(RouteNames.calendar);
-    } else if (index == 2) {
+    debugPrint('[Nav] changeNavIndex: ${selectedNavIndex.value} -> $index');
+    // Center button opens the add-task form without changing the active tab.
+    if (index == 2) {
       Get.toNamed(RouteNames.addTask);
-    } else if (index == 3) {
-      Get.offNamed(RouteNames.statistics);
-    } else if (index == 4) {
-      Get.offNamed(RouteNames.profile);
+      return;
     }
+
+    selectedNavIndex.value = index;
   }
 }
